@@ -1,0 +1,58 @@
+# ============================================================
+#  AURORA 多前端 —— nginx 同域名按路径分发示例
+# ============================================================
+#  思路：每个前端各自 `npm run build` 得到独立的 dist/，
+#  放到服务器不同目录，再用 location 前缀挂到同一个域名下。
+#
+#  目录约定（可自行调整）：
+#    /var/www/aurora/home/   ← 主页 (web 项目的 dist)
+#    /var/www/aurora/blog/   ← 博客 (本项目的 dist)
+#    /var/www/aurora/lab/    ← 实验室 (后续)
+#    ...
+#
+#  因为各前端 vite 的 base 都是相对路径('./')，且博客用 hash 路由，
+#  所以这里不需要任何 try_files / rewrite，直接当静态目录伺服即可。
+
+server {
+    listen 80;
+    server_name rikkely.top;          # ← 换成你的域名
+
+    # ---- 主页（主路径）----
+    root /var/www/aurora/home;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # ---- 博客：/blog/ ----
+    location /blog/ {
+        alias /var/www/aurora/blog/;
+        index index.html;
+        try_files $uri $uri/ /blog/index.html;
+    }
+
+    # ---- 实验室：/lab/（后续）----
+    # location /lab/ {
+    #     alias /var/www/aurora/lab/;
+    #     index index.html;
+    #     try_files $uri $uri/ /lab/index.html;
+    # }
+
+    # ---- 后端 API（接好后端后启用）----
+    # 博客 live 模式会请求 {api.base}/blog/...，默认 api.base = /api
+    # location /api/ {
+    #     proxy_pass http://127.0.0.1:8080/;   # ← 后端服务地址
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Real-IP $remote_addr;
+    # }
+
+    # 静态资源缓存（可选）
+    location ~* \.(?:js|css|woff2?|ttf|png|jpe?g|webp|svg)$ {
+        expires 7d;
+        add_header Cache-Control "public";
+    }
+}
+
+# ---- HTTPS 版本（上线建议）----
+# 复制上面的 server 块，listen 443 ssl; 配好证书即可。
