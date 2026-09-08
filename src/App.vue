@@ -2,144 +2,99 @@
 import { computed } from 'vue'
 import config from './config.js'
 import { useHashRoute } from './composables/useHashRoute.js'
+import { useScrollProgress } from './composables/useScrollProgress.js'
 
-import ZineStage from './components/ZineStage.vue'
+import BloomScene from './components/BloomScene.vue'
+import TopBar from './components/TopBar.vue'
 import PostList from './components/PostList.vue'
 import PostDetail from './components/PostDetail.vue'
 
-// 固定「暗夜文学刊物」配色 + 衬线字（独立风格，不跟随主页主题）
-const s = document.documentElement.style
-s.setProperty('--bg-0', '#100f12')
-s.setProperty('--text', 'rgba(236, 230, 218, 0.96)')
-s.setProperty('--text-soft', 'rgba(236, 230, 218, 0.72)')
-s.setProperty('--text-dim', 'rgba(236, 230, 218, 0.44)')
-s.setProperty('--accent-a', '#d9a85f')
-s.setProperty('--accent-b', '#c8754f')
-s.setProperty('--accent-c', '#9a8fb0')
-s.setProperty('--font-serif', "'Georgia', 'Times New Roman', 'Noto Serif SC', 'Songti SC', 'STSong', serif")
+const route = useHashRoute()
+const { progress } = useScrollProgress()
 
-document.title = `${config.site.name}${config.site.suffix || ''} · 日志归档`
+document.title = `${config.site.name} · ${config.site.author}`
 
+// 用主页同款头像作为浏览器标签页图标
 const fav = document.querySelector("link[rel='icon']") || document.createElement('link')
 fav.setAttribute('rel', 'icon')
-fav.removeAttribute('type')
 fav.setAttribute('href', config.site.avatar)
 if (!fav.parentNode) document.head.appendChild(fav)
 
-const route = useHashRoute()
-const section = computed(() => (route.value.name === 'post' ? '文章' : '目录'))
-
-const f = config.footer || {}
+const f = config.footer
 const year = new Date().getFullYear()
-const issue = String((new Date().getFullYear() - (f.startYear || 2023)) * 4 + 7).padStart(2, '0')
+const isPost = computed(() => route.value.name === 'post')
 </script>
 
 <template>
-  <ZineStage />
+  <BloomScene />
 
-  <header class="mast">
-    <a class="mast__home" :href="config.site.homeUrl">← 主控台</a>
-    <span class="mast__title">日志归档 <i>·</i> THE AURORA DISPATCH</span>
-    <span class="mast__issue">第 {{ issue }} 期 · {{ section }}</span>
-  </header>
-  <div class="mast__rule"><span /><span /></div>
+  <!-- 阅读进度（文章页才显示） -->
+  <div
+    v-if="isPost"
+    class="progress"
+    :style="{ transform: `scaleX(${progress})` }"
+    aria-hidden="true"
+  />
 
-  <main class="page">
-    <PostList v-if="route.name === 'list'" />
-    <PostDetail v-else :slug="route.slug" :key="route.slug" />
-  </main>
+  <div class="page">
+    <TopBar />
 
-  <footer class="colophon">
-    <span class="colophon__mark">◆</span>
-    <p>印于互联网的边缘 · PRINTED ON THE EDGE OF THE NET</p>
-    <p class="colophon__fine">© {{ f.startYear }}–{{ year }} {{ f.author }} ·
-      <a :href="config.site.homeUrl">返回主控台</a>
-    </p>
-  </footer>
+    <main class="page__main">
+      <PostDetail v-if="isPost" :slug="route.slug" />
+      <PostList v-else />
+    </main>
+
+    <footer class="foot">
+      <span>© {{ f.startYear }}–{{ year }} {{ f.author }}</span>
+      <span class="foot__dot">·</span>
+      <a :href="config.site.homeUrl">回到主页</a>
+      <template v-if="f.icp">
+        <span class="foot__dot">·</span>
+        <a :href="f.icpLink" target="_blank" rel="noopener">{{ f.icp }}</a>
+      </template>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
-.mast {
-  position: sticky;
+.progress {
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
   z-index: 50;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  width: min(940px, 92vw);
-  margin: 0 auto;
-  padding: 16px 0 10px;
-  background: linear-gradient(180deg, #100f12 75%, transparent);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 1.6px;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-.mast__home {
-  color: var(--accent-a);
-  white-space: nowrap;
-  transition: opacity 0.2s;
-}
-.mast__home:hover {
-  opacity: 0.7;
-}
-.mast__title {
-  font-family: var(--font-serif);
-  font-size: 0.92rem;
-  letter-spacing: 3px;
-  text-transform: none;
-  color: var(--text-soft);
-}
-.mast__title i {
-  color: var(--accent-a);
-  font-style: normal;
-}
-.mast__issue {
-  white-space: nowrap;
-}
-.mast__rule {
-  width: min(940px, 92vw);
-  margin: 0 auto 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.mast__rule span {
-  display: block;
-  height: 1px;
-  background: color-mix(in srgb, var(--accent-a) 45%, transparent);
-}
-.mast__rule span:last-child {
-  background: color-mix(in srgb, var(--accent-a) 22%, transparent);
+  background: linear-gradient(90deg, var(--ember), var(--gold), var(--moon));
+  box-shadow: 0 0 10px rgba(224, 179, 106, 0.5);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
 }
 
 .page {
-  position: relative;
+  width: min(960px, 92vw);
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.page__main {
+  flex: 1;
 }
 
-.colophon {
-  width: min(940px, 92vw);
-  margin: 40px auto 30px;
-  padding-top: 22px;
-  border-top: 1px solid color-mix(in srgb, var(--accent-a) 22%, transparent);
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  letter-spacing: 1.4px;
-  color: var(--text-dim);
+.foot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 0 30px;
+  font-size: 0.8rem;
+  color: var(--cream-dim);
 }
-.colophon__mark {
-  display: block;
-  margin-bottom: 10px;
-  color: var(--accent-a);
+.foot a:hover {
+  color: var(--gold);
+  text-decoration: underline;
 }
-.colophon p {
-  margin: 4px 0;
-}
-.colophon__fine a {
-  color: var(--accent-a);
-  border-bottom: 1px solid color-mix(in srgb, var(--accent-a) 40%, transparent);
+.foot__dot {
+  opacity: 0.5;
 }
 </style>

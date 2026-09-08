@@ -1,27 +1,24 @@
 /**
- * 写死的文章数据（后端就绪前的占位内容）。
+ * 写死的文章数据（mock）。后端就绪后改 config.api.mode = 'live' 即可，无需动这里。
  *
- *  字段说明：
- *    slug     唯一短链（出现在 #/p/<slug>）
- *    title    标题
- *    date     'YYYY-MM-DD'
- *    tags     标签数组
- *    excerpt  列表页摘要
- *    readMins 预计阅读分钟
- *    accent   0|1|2 —— 决定该文配色取主题 a/b/c 中的哪一色（仅装饰）
- *    pinned   是否置顶
- *    body     正文 HTML（后端可改为返回 markdown 再前端渲染）
- *
- *  接后端后整份文件可弃用，由 src/api/client.js 的 live 模式接管。
+ * 字段说明：
+ *   slug      唯一标识，详情页地址为 #/p/<slug>
+ *   title     标题
+ *   date      YYYY-MM-DD
+ *   tags      标签数组
+ *   excerpt   列表页摘要
+ *   readMins  预计阅读分钟数
+ *   accent    0-3，卡片点缀色编号（叶绿 / 天蓝 / 杏橘 / 藤紫 轮换）
+ *   pinned    是否置顶
+ *   body      正文 HTML（支持 h2/p/ul/blockquote/pre>code 等）
  */
-export const posts = [
+export const POSTS = [
   {
-    slug: 'aurora-cockpit',
-    title: '为博客造了一座 HUD 座舱',
-    date: '2026-05-28',
-    tags: ['设计', '前端', '折腾'],
-    excerpt:
-      '把一个普通的个人主页，一路改造成带开机自检、雷达、点火动画的机甲控制台。这篇记录从「毛玻璃卡片」到「全息读数」的取舍。',
+    slug: "aurora-cockpit",
+    title: "为博客造了一座 HUD 座舱",
+    date: "2026-05-28",
+    tags: ["设计","前端","折腾"],
+    excerpt: "把一个普通的个人主页，一路改造成带开机自检、雷达、点火动画的机甲控制台。这篇记录从「毛玻璃卡片」到「全息读数」的取舍。",
     readMins: 8,
     accent: 0,
     pinned: true,
@@ -49,12 +46,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'vue3-island-notes',
-    title: 'Vue 3 + Vite：几条踩过坑的手记',
-    date: '2026-04-12',
-    tags: ['Vue', '前端'],
-    excerpt:
-      '关于 <script setup>、import.meta.glob 自动收集资源、以及为什么我这次没有引入路由库的一些零碎记录。',
+    slug: "vue3-island-notes",
+    title: "Vue 3 + Vite：几条踩过坑的手记",
+    date: "2026-04-12",
+    tags: ["Vue","前端"],
+    excerpt: "关于 <script setup>、import.meta.glob 自动收集资源、以及为什么我这次没有引入路由库的一些零碎记录。",
     readMins: 6,
     accent: 1,
     pinned: false,
@@ -74,12 +70,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'color-mix-theming',
-    title: '用 color-mix 给整站做「一键换肤」',
-    date: '2026-03-03',
-    tags: ['前端', '设计'],
-    excerpt:
-      '三套 HUD 配色（青 / 红 / 绿）只靠几个 CSS 变量 + color-mix 联动，连发光阴影都跟着主题走。',
+    slug: "color-mix-theming",
+    title: "用 color-mix 给整站做「一键换肤」",
+    date: "2026-03-03",
+    tags: ["前端","设计"],
+    excerpt: "三套 HUD 配色（青 / 红 / 绿）只靠几个 CSS 变量 + color-mix 联动，连发光阴影都跟着主题走。",
     readMins: 5,
     accent: 2,
     pinned: false,
@@ -100,11 +95,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'edge-of-internet',
-    title: '互联网边缘的一座中继站',
-    date: '2026-01-20',
-    tags: ['随笔'],
-    excerpt: '为什么我还在折腾个人站点？一点关于「自己的一小块地」的碎碎念。',
+    slug: "edge-of-internet",
+    title: "互联网边缘的一座中继站",
+    date: "2026-01-20",
+    tags: ["随笔"],
+    excerpt: "为什么我还在折腾个人站点？一点关于「自己的一小块地」的碎碎念。",
     readMins: 4,
     accent: 0,
     pinned: false,
@@ -117,11 +112,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'glass-to-hologram',
-    title: '从毛玻璃卡片到全息读数',
-    date: '2025-11-09',
-    tags: ['设计'],
-    excerpt: 'Glassmorphism 很美，但它有边界感。我想要的是「悬浮在空气里的数据」。',
+    slug: "glass-to-hologram",
+    title: "从毛玻璃卡片到全息读数",
+    date: "2025-11-09",
+    tags: ["设计"],
+    excerpt: "Glassmorphism 很美，但它有边界感。我想要的是「悬浮在空气里的数据」。",
     readMins: 6,
     accent: 1,
     pinned: false,
@@ -139,11 +134,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'frame-budget',
-    title: '一帧 16.6ms 的预算，怎么花',
-    date: '2025-09-15',
-    tags: ['性能', '前端'],
-    excerpt: '满屏动画、视差、模糊还想跑满 60fps？记几条让浏览器少掉帧的实战取舍。',
+    slug: "frame-budget",
+    title: "一帧 16.6ms 的预算，怎么花",
+    date: "2025-09-15",
+    tags: ["性能","前端"],
+    excerpt: "满屏动画、视差、模糊还想跑满 60fps？记几条让浏览器少掉帧的实战取舍。",
     readMins: 7,
     accent: 2,
     pinned: false,
@@ -163,11 +158,11 @@ if (progress.value >= 100) {
     `
   },
   {
-    slug: 'hello-archive',
-    title: '归档系统上线',
-    date: '2025-08-01',
-    tags: ['随笔'],
-    excerpt: '第一篇。如果你看到这条，说明中继站的日志模块已经通电。',
+    slug: "hello-archive",
+    title: "归档系统上线",
+    date: "2025-08-01",
+    tags: ["随笔"],
+    excerpt: "第一篇。如果你看到这条，说明中继站的日志模块已经通电。",
     readMins: 2,
     accent: 0,
     pinned: false,

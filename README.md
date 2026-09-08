@@ -1,9 +1,9 @@
-# AURORA // DATA ARCHIVE —— 博客前端
+# 拾光集 —— 博客前端
 
-主页（座舱控制台）的同款科幻风格博客，**独立可部署**的纯前端项目。
+清新纸感的轻杂志风格博客（**有意与主页的机甲 HUD 区分开**），独立可部署的纯前端项目。
 `npm run build` 生成 `dist/`，丢到 nginx 的 `/blog/` 路径即可。
 
-技术栈：Vue 3 + Vite 6（纯 JS，无 TypeScript），零路由库（自带极简 hash 路由）。
+技术栈：Vue 3 + Vite 6（纯 JS，无 TypeScript），零路由库（自带极简 hash 路由），零字体/背景图（首屏 ~120KB）。
 
 ---
 
@@ -20,26 +20,20 @@ npm run preview  # 本地预览构建产物
 
 ```
 src/
-  config.js              站点 & 归档 & 主题 & API 配置（改这里）
+  config.js              站点 / 刊头 / API 配置（改这里）
   api/
     client.js            数据访问层（mock / live 切换）
-    mock/posts.js        写死的文章（后端就绪前的占位内容）
-  composables/           主题 / 指针视差 / hash 路由 / 滚动进度 / 系统状态
-  components/            TopBar · PostList · PostCard · PostDetail · TagBar · 背景 · 加载页
-  assets/                字体 / 头像 / 背景图（往 images/bg 丢图即可增减）
-  styles/global.css      设计令牌（与主页同一套配色变量）
+    mock/posts.js        写死的文章（后端就绪前的内容，也可一直当静态博客用）
+  composables/           hash 路由 / 滚动进度
+  components/            TopBar · PostList · PostCard · PostDetail · TagBar · BloomScene(背景)
+  assets/images/         头像（26KB jpg）
+  styles/global.css      设计令牌（暖纸底 + 墨色 + 四枚低饱和点缀色）
 ```
 
-## 配置要点（`src/config.js`）
+## 写文章
 
-| 字段 | 说明 |
-| --- | --- |
-| `site.homeUrl` | 「返回主控台」指向的主页地址，默认 `/` |
-| `archive.*` | 归档页标题 / 副标题 / 每页条数 |
-| `background.*` | 背景切换间隔；`images` 留空用打包的本地图 |
-| `api.mode` | `'mock'`（写死）或 `'live'`（走后端） |
-| `api.base` | live 模式接口前缀，默认 `/api` |
-| `theme.*` | HUD 主题色（与主页共用 `localStorage`，同域名记忆） |
+在 `src/api/mock/posts.js` 里加一个对象即可（slug/title/date/tags/excerpt/readMins/accent/pinned/body），
+body 为 HTML 字符串，支持 `h2 / p / ul / blockquote / pre>code` 等。改完 `npm run build` 重新部署。
 
 ## 接后端（后续）
 
@@ -55,5 +49,5 @@ GET {base}/blog/tags           → { name, count }[]
 
 ## 部署
 
-见 `nginx.conf.example`：每个前端各自构建出独立 `dist/`，用 `location` 前缀挂到同一域名。
+见仓库中的 `nginx.conf.example`：每个前端各自构建出独立 `dist/`，用 `location` 前缀挂到同一域名。
 本项目 `base` 为相对路径且用 hash 路由，放任意子路径都能直接跑，无需 rewrite。

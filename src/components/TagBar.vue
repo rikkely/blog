@@ -1,26 +1,26 @@
 <script setup>
-import IconBase from './IconBase.vue'
-
 defineProps({
-  tags: { type: Array, default: () => [] },
-  modelValue: { type: String, default: '' }
+  tags: { type: Array, default: () => [] }, // [{ name, count }]
+  active: { type: String, default: '' }
 })
-const emit = defineEmits(['update:modelValue'])
-const pick = (name) => emit('update:modelValue', name)
+const emit = defineEmits(['pick'])
 </script>
 
 <template>
   <div class="tags">
-    <span class="tags__lead"><IconBase name="tag" :size="13" />FILTER</span>
-    <button class="chip" :class="{ 'is-on': modelValue === '' }" @click="pick('')">
-      ALL
+    <button
+      class="tags__chip"
+      :class="{ 'is-on': !active }"
+      @click="emit('pick', '')"
+    >
+      全部
     </button>
     <button
       v-for="t in tags"
       :key="t.name"
-      class="chip"
-      :class="{ 'is-on': modelValue === t.name }"
-      @click="pick(t.name)"
+      class="tags__chip"
+      :class="{ 'is-on': active === t.name }"
+      @click="emit('pick', t.name)"
     >
       {{ t.name }}<i>{{ t.count }}</i>
     </button>
@@ -30,54 +30,38 @@ const pick = (name) => emit('update:modelValue', name)
 <style scoped>
 .tags {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
   gap: 8px;
 }
-.tags__lead {
+.tags__chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: 4px;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 1.6px;
-  color: var(--text-dim);
-  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--night-2);
+  font-size: 0.82rem;
+  color: var(--cream-soft);
+  transition: all 0.3s var(--ease-out);
 }
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 11px;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.5px;
-  color: var(--text-soft);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-  transition: color 0.25s, border-color 0.25s, background 0.25s, box-shadow 0.25s,
-    transform 0.25s var(--ease-out);
-}
-.chip i {
+.tags__chip i {
   font-style: normal;
-  font-size: 0.6rem;
-  color: var(--text-dim);
+  font-size: 0.7rem;
+  color: var(--cream-dim);
 }
-.chip:hover {
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--accent-a) 50%, transparent);
-  transform: translateY(-1px);
+.tags__chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(224, 179, 106, 0.45);
+  box-shadow: 0 0 16px -6px rgba(224, 179, 106, 0.45);
 }
-.chip.is-on {
-  color: #06121e;
-  font-weight: 600;
-  border-color: transparent;
-  background: linear-gradient(120deg, var(--accent-a), var(--accent-b));
-  box-shadow: 0 0 18px -3px color-mix(in srgb, var(--accent-a) 70%, transparent);
+.tags__chip.is-on {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #1a1408;
+  box-shadow: 0 0 20px -4px rgba(224, 179, 106, 0.55);
 }
-.chip.is-on i {
-  color: rgba(6, 18, 30, 0.7);
+.tags__chip.is-on i {
+  color: rgba(26, 20, 8, 0.6);
 }
 </style>

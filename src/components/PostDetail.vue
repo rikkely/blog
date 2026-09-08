@@ -1,331 +1,275 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import config from '../config.js'
 import { fetchPost } from '../api/client.js'
-import { useScrollProgress } from '../composables/useScrollProgress.js'
 import { navigate } from '../composables/useHashRoute.js'
 
-const props = defineProps({
-  slug: { type: String, required: true }
-})
+const props = defineProps({ slug: { type: String, required: true } })
 
-const data = ref(null)
-const loading = ref(true)
-const notFound = ref(false)
-const { progress } = useScrollProgress()
-const author = config.site.author || 'rikkely'
+const post = ref(null)
+const prev = ref(null)
+const next = ref(null)
+const missing = ref(false)
 
-const post = computed(() => data.value?.post || null)
-const dateFmt = computed(() => {
-  const [y, m, d] = (post.value?.date || '').split('-')
-  return y ? `${y} 年 ${+m} 月 ${+d} 日` : post.value?.date
-})
+// 烛金 / 余烬 / 苔绿 / 月银
+const ACCENTS = ['var(--gold)', 'var(--ember)', 'var(--moss)', 'var(--moon)']
+const accent = ref(ACCENTS[0])
 
-async function load(slug) {
-  loading.value = true
-  notFound.value = false
-  data.value = null
-  try {
-    const res = await fetchPost(slug)
-    if (!res || !res.post) notFound.value = true
-    else data.value = res
-  } catch (e) {
-    notFound.value = true
-  } finally {
-    loading.value = false
-  }
-}
-onMounted(() => load(props.slug))
-watch(() => props.slug, (s) => load(s))
-
-const open = (slug) => navigate(`/p/${slug}`)
-const back = () => navigate('/')
+watch(
+  () => props.slug,
+  async (slug) => {
+    missing.value = false
+    post.value = null
+    const r = await fetchPost(slug)
+    if (!r.post) {
+      missing.value = true
+      return
+    }
+    post.value = r.post
+    prev.value = r.prev
+    next.value = r.next
+    accent.value = ACCENTS[(r.post.accent || 0) % 4]
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
-  <div class="rd">
-    <div class="progress" :style="{ transform: `scaleX(${progress})` }" />
+  <div class="post" :style="{ '--acc': accent }">
+    <a class="post__back reveal" href="#/" @click.prevent="navigate('/')">← 回到归档</a>
 
-    <div v-if="loading" class="state">正在翻页…</div>
-
-    <div v-else-if="notFound" class="state state--err">
-      <p>未找到该文章（{{ slug }}）</p>
-      <button class="ghost" @click="back">← 回到目录</button>
-    </div>
-
-    <article v-else class="art">
-      <header class="art__head">
-        <div class="art__topics">
-          <span v-for="t in post.tags" :key="t">#{{ t }}</span>
+    <template v-if="post">
+      <header class="post__head reveal" style="--delay: 0.06s">
+        <div class="post__meta">
+          <time>{{ post.date }}</time>
+          <span>·</span>
+          <span>{{ post.readMins }} 分钟</span>
+          <span>·</span>
+          <span>{{ config.site.author }}</span>
         </div>
-        <h1 class="art__title">{{ post.title }}</h1>
-        <div class="art__byline">
-          <img class="art__ava" :src="config.site.avatar" :alt="author" />
-          <span>{{ author }}</span>
-          <span class="art__sep">·</span>
-          <span>{{ dateFmt }}</span>
-          <span class="art__sep">·</span>
-          <span>{{ post.readMins }} 分钟阅读</span>
+        <h1 class="post__title">{{ post.title }}</h1>
+        <div class="post__tags">
+          <span v-for="t in post.tags" :key="t"># {{ t }}</span>
         </div>
       </header>
 
-      <div class="art__body" v-html="post.body" />
+      <article class="post__body reveal" style="--delay: 0.14s" v-html="post.body" />
 
-      <nav class="ends">
-        <a v-if="data.prev" class="end" :href="`#/p/${data.prev.slug}`" @click.prevent="open(data.prev.slug)">
-          <span class="end__lbl">← 新一篇</span>
-          <span class="end__t">{{ data.prev.title }}</span>
+      <nav class="post__pager reveal" style="--delay: 0.2s">
+        <a
+          v-if="prev"
+          class="post__pageritem"
+          :href="`#/p/${prev.slug}`"
+          @click.prevent="navigate(`/p/${prev.slug}`)"
+        >
+          <i>← 较新</i><b>{{ prev.title }}</b>
         </a>
-        <span v-else />
-        <a v-if="data.next" class="end end--r" :href="`#/p/${data.next.slug}`" @click.prevent="open(data.next.slug)">
-          <span class="end__lbl">旧一篇 →</span>
-          <span class="end__t">{{ data.next.title }}</span>
+        <span v-else class="post__pageritem is-empty" />
+        <a
+          v-if="next"
+          class="post__pageritem is-right"
+          :href="`#/p/${next.slug}`"
+          @click.prevent="navigate(`/p/${next.slug}`)"
+        >
+          <i>较旧 →</i><b>{{ next.title }}</b>
         </a>
-        <span v-else />
+        <span v-else class="post__pageritem is-empty" />
       </nav>
+    </template>
 
-      <div class="art__back"><button @click="back">← 返回目录</button></div>
-    </article>
+    <p v-else-if="missing" class="post__missing">
+      没有找到这篇文章。<a href="#/" @click.prevent="navigate('/')">回到归档</a>
+    </p>
   </div>
 </template>
 
 <style scoped>
-.rd {
-  position: relative;
-}
-.progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  z-index: 60;
-  transform-origin: left;
-  background: var(--accent-a);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--accent-a) 70%, transparent);
-}
-
-.art {
-  width: min(680px, 92vw);
+.post {
+  max-width: 720px;
   margin: 0 auto;
-  padding: clamp(20px, 4vh, 40px) 0 30px;
+  padding-bottom: 40px;
 }
 
-/* header */
-.art__head {
+.post__back {
+  display: inline-block;
+  margin: 6px 0 22px;
+  font-size: 0.86rem;
+  color: var(--cream-dim);
+  transition: color 0.3s, transform 0.3s var(--ease-out);
+}
+.post__back:hover {
+  color: var(--acc);
+  transform: translateX(-3px);
+}
+
+.post__head {
   text-align: center;
   padding-bottom: 26px;
-  margin-bottom: 30px;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent-a) 22%, transparent);
 }
-.art__topics {
+.post__meta {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--cream-dim);
+}
+.post__title {
+  margin: 14px 0 12px;
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+  line-height: 1.4;
+  letter-spacing: 1px;
+  color: var(--cream);
+  text-shadow: 0 0 28px color-mix(in srgb, var(--acc) 35%, transparent);
+}
+.post__tags {
   display: flex;
   justify-content: center;
   gap: 12px;
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--accent-a);
-}
-.art__title {
-  margin: 18px 0;
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: clamp(1.9rem, 5vw, 3.1rem);
-  line-height: 1.22;
-  letter-spacing: 0.3px;
-  color: var(--text);
-}
-.art__byline {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.5px;
-  color: var(--text-dim);
-}
-.art__ava {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--accent-a) 45%, transparent);
-}
-.art__sep {
-  opacity: 0.5;
+  font-size: 0.8rem;
+  color: var(--acc);
 }
 
-/* body */
-.art__body {
-  font-family: var(--font-serif);
-  font-size: 1.12rem;
+/* ---------- 正文排版 ---------- */
+.post__body {
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: clamp(24px, 4.5vw, 44px);
+  font-size: 1rem;
   line-height: 1.95;
-  color: var(--text-soft);
+  color: var(--cream);
 }
-.art__body :deep(p) {
-  margin: 0 0 22px;
+.post__body :deep(p) {
+  margin: 0 0 1.1em;
+  color: var(--cream-soft);
 }
-.art__body :deep(> p:first-of-type)::first-letter {
-  float: left;
-  font-size: 3.6em;
-  line-height: 0.78;
-  padding: 0.06em 0.12em 0 0;
-  color: var(--accent-a);
-  font-weight: 700;
-}
-.art__body :deep(h2) {
-  margin: 40px 0 16px;
+.post__body :deep(h2) {
+  position: relative;
+  margin: 1.8em 0 0.8em;
+  padding-left: 16px;
   font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 0.3px;
-  color: var(--text);
+  font-size: 1.28rem;
+  color: var(--cream);
 }
-.art__body :deep(h2)::before {
-  content: '§ ';
-  color: var(--accent-a);
-}
-.art__body :deep(h3) {
-  margin: 30px 0 12px;
-  font-family: var(--font-serif);
-  font-size: 1.2rem;
-  color: var(--text);
-}
-.art__body :deep(ul),
-.art__body :deep(ol) {
-  margin: 0 0 22px;
-  padding-left: 26px;
-}
-.art__body :deep(li) {
-  margin: 8px 0;
-}
-.art__body :deep(li)::marker {
-  color: var(--accent-a);
-}
-.art__body :deep(strong) {
-  color: var(--text);
-  font-weight: 700;
-}
-.art__body :deep(em) {
-  color: var(--accent-b);
-  font-style: italic;
-}
-.art__body :deep(a) {
-  color: var(--accent-a);
-  border-bottom: 1px solid color-mix(in srgb, var(--accent-a) 45%, transparent);
-}
-.art__body :deep(blockquote) {
-  margin: 26px 0;
-  padding: 4px 0 4px 22px;
-  border-left: 2px solid var(--accent-a);
-  font-style: italic;
-  color: var(--text);
-}
-.art__body :deep(code) {
-  font-family: var(--font-mono);
-  font-size: 0.82em;
-  padding: 1px 6px;
+.post__body :deep(h2)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.28em;
+  bottom: 0.28em;
+  width: 4px;
   border-radius: 4px;
-  background: rgba(236, 230, 218, 0.08);
-  color: var(--accent-a);
+  background: var(--acc);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--acc) 70%, transparent);
 }
-.art__body :deep(pre) {
-  margin: 0 0 24px;
-  padding: 16px 18px;
-  overflow-x: auto;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(236, 230, 218, 0.12);
+.post__body :deep(ul),
+.post__body :deep(ol) {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+  color: var(--cream-soft);
+}
+.post__body :deep(li) {
+  margin-bottom: 0.35em;
+}
+.post__body :deep(blockquote) {
+  margin: 1.3em 0;
+  padding: 14px 20px;
+  border-left: 4px solid var(--acc);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: color-mix(in srgb, var(--acc) 9%, var(--night-2));
+  color: var(--cream-soft);
+  font-style: italic;
+}
+.post__body :deep(code) {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 2px 7px;
   border-radius: 6px;
+  background: var(--night-3);
+  color: #ecd9ae;
 }
-.art__body :deep(pre code) {
-  padding: 0;
+.post__body :deep(pre) {
+  margin: 1.3em 0;
+  padding: 18px 20px;
+  border-radius: var(--radius-sm);
+  background: #0a0805;
+  border: 1px solid var(--line);
+  overflow-x: auto;
+}
+.post__body :deep(pre code) {
   background: none;
-  color: var(--text-soft);
-  font-size: 0.86rem;
+  padding: 0;
+  color: #e9dcb8;
+  font-size: 0.84rem;
   line-height: 1.7;
 }
+.post__body :deep(strong) {
+  color: var(--cream);
+}
+.post__body :deep(em) {
+  color: var(--cream-soft);
+}
 
-/* ends */
-.ends {
+/* ---------- 上一篇 / 下一篇 ---------- */
+.post__pager {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 44px;
-  padding-top: 26px;
-  border-top: 1px solid color-mix(in srgb, var(--accent-a) 22%, transparent);
+  gap: 14px;
+  margin-top: 26px;
 }
-.end {
+.post__pageritem {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--night-2);
+  border: 1px solid var(--line);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s, border-color 0.4s;
 }
-.end--r {
+.post__pageritem:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--acc) 45%, transparent);
+  box-shadow: var(--card-shadow-hover);
+}
+.post__pageritem.is-right {
   text-align: right;
 }
-.end__lbl {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 1px;
-  color: var(--accent-a);
+.post__pageritem.is-empty {
+  visibility: hidden;
 }
-.end__t {
-  font-family: var(--font-serif);
-  font-size: 1.02rem;
-  color: var(--text-soft);
-  transition: color 0.2s;
-}
-.end:hover .end__t {
-  color: var(--text);
-}
-
-.art__back {
-  margin-top: 30px;
-  text-align: center;
-}
-.art__back button {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 1px;
-  color: var(--text-dim);
-  transition: color 0.2s;
-}
-.art__back button:hover {
-  color: var(--accent-a);
-}
-
-/* states */
-.state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding: 90px 0;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 1.1rem;
-  color: var(--text-dim);
-}
-.state--err {
-  color: var(--accent-b);
-}
-.ghost {
-  font-family: var(--font-mono);
+.post__pageritem i {
+  font-style: normal;
   font-size: 0.72rem;
-  letter-spacing: 1px;
-  color: var(--accent-a);
-  padding: 8px 16px;
-  border: 1px solid color-mix(in srgb, var(--accent-a) 40%, transparent);
-  border-radius: 4px;
+  color: var(--cream-dim);
+}
+.post__pageritem b {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--cream);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-@media (max-width: 540px) {
-  .ends {
+.post__missing {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--cream-dim);
+}
+.post__missing a {
+  color: var(--gold);
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .post__pager {
     grid-template-columns: 1fr;
-  }
-  .end--r {
-    text-align: left;
   }
 }
 </style>
