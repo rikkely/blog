@@ -8,6 +8,7 @@ import BloomScene from './components/BloomScene.vue'
 import TopBar from './components/TopBar.vue'
 import PostList from './components/PostList.vue'
 import PostDetail from './components/PostDetail.vue'
+import AuroraDock from './components/AuroraDock.vue'
 
 const route = useHashRoute()
 const { progress } = useScrollProgress()
@@ -54,6 +55,8 @@ const isPost = computed(() => route.value.name === 'post')
       </template>
     </footer>
   </div>
+
+  <AuroraDock active="blog" />
 </template>
 
 <style scoped>
@@ -86,7 +89,7 @@ const isPost = computed(() => route.value.name === 'post')
   justify-content: center;
   align-items: center;
   gap: 10px;
-  padding: 26px 0 30px;
+  padding: 26px 0 88px;
   font-size: 0.8rem;
   color: var(--cream-dim);
 }

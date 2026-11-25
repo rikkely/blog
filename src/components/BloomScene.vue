@@ -27,6 +27,7 @@ function flyStyle(n) {
     <div class="night__flies">
       <span v-for="n in 16" :key="n" :style="flyStyle(n)" />
     </div>
+    <div class="night__grain" />
     <div class="night__vignette" />
   </div>
 </template>
@@ -99,10 +100,17 @@ function flyStyle(n) {
   }
 }
 
+.night__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 .night__vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(115% 95% at 50% 38%, transparent 45%, rgba(0, 0, 0, 0.5) 100%);
+  background: radial-gradient(115% 95% at 50% 38%, transparent 45%, rgba(0, 0, 0, 0.52) 100%);
 }
 
 /* 移动端：少几只流萤、停掉位移（保留明灭），省电省 GPU */
